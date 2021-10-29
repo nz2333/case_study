@@ -1,0 +1,109 @@
+---
+title: "case_study"
+author: "nz2333"
+date: "10/29/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(p8105.datasets)
+library(leaflet)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+
+##load the dataset
+```{r}
+data("nyc_airbnb")
+```
+
+# How many retals are there, what type, what places?
+```{r}
+nyc_airbnb = 
+  nyc_airbnb %>%
+  mutate(stars = review_scores_location / 2) %>%
+  rename(borough = neighbourhood_group)
+```
+
+count things:
+```{r}
+nyc_airbnb %>%
+  janitor::tabyl(borough, room_type)
+```
+same thing:
+```{r}
+nyc_airbnb %>%
+  count(borough, room_type) %>%
+  pivot_wider(
+    names_from = room_type, 
+    values_from = n
+  )
+```
+
+# Is price correlated with the review score?
+```{r}
+nyc_airbnb %>%
+  ggplot(aes(x = stars, y = price)) +
+  geom_point()+
+  facet_grid(. ~room_type)
+```
+
+# Which neighborhood is most popular ? most expensive?
+```{r}
+nyc_airbnb %>%
+  group_by(neighbourhood) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE)) %>%
+  arrange(mean_price)
+
+nyc_airbnb %>%
+  group_by(neighbourhood) %>%
+  summarize(mean_review = mean(stars, na.rm = TRUE)) %>%
+  arrange(-mean_review)
+```
+
+# Distance to subway and ratings
+```{r}
+nyc_airbnb %>%
+  filter(price < 500) %>%
+  sample_n(5000) %>%
+  ggplot(aes(x = lat, y = long, color = price)) +
+  geom_point(alpha = 0.5)
+```
+*can tell from the mapping, closer to central mahanttan, price gets higher. 
+
+# Retry leaflet
+```{r}
+nyc_airbnb %>%
+  filter(price < 500) %>%
+  sample_n(1000) %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(~lat, ~long)
+```
+* AddTiles: the background
+
+
+# Which neighborhood has the highest reviews?
+# Is availability related to price?
+# Is room type related to neighborhood?
+# Is length of stay related to neightborhood group?
+
+
+
+
